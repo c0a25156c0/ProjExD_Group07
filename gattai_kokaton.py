@@ -27,20 +27,36 @@ BALL_IMAGE_PATH = "fig/0.png"
 class Ball:
     """落ちてくる小さい球（画像で表示）"""
 
+    delta = {  # 押下キーと移動量の辞書
+        pg.K_a: (-7, 0),
+        pg.K_d: (+7, 0),
+    }
+
     def __init__(self, x: float, y: float, image: pg.Surface):
         self.x = x
         self.y = y
+        self.vx = 0.0
         self.vy = 0.0
         self.falling = False  # Enterキーが押されるまでは静止
         size = BALL_RADIUS * 2
         self.image = pg.transform.smoothscale(image, (size, size))
 
+    
     def update_physics(self):
         if not self.falling:
             return
 
         self.vy += GRAVITY
+        self.x += self.vx
         self.y += self.vy
+
+        # 壁との衝突
+        if self.x - BALL_RADIUS < WALL_MARGIN:
+            self.x = WALL_MARGIN + BALL_RADIUS
+            self.vx *= -RESTITUTION
+        if self.x + BALL_RADIUS > WIDTH - WALL_MARGIN:
+            self.x = WIDTH - WALL_MARGIN - BALL_RADIUS
+            self.vx *= -RESTITUTION
 
         # 床との衝突
         if self.y + BALL_RADIUS > FLOOR_Y:
@@ -49,7 +65,22 @@ class Ball:
             if abs(self.vy) < 1.0:
                 self.vy = 0.0
 
-    def draw(self, screen: pg.Surface):
+    def draw(self, key_lst: list[bool],screen: pg.Surface):
+        #初期位置移動
+        sum_mv = [0, 0]
+        if not self.falling:
+            for key in self.delta:
+                if key_lst[key]:
+                    sum_mv[0] += self.delta[key][0]
+                    sum_mv[1] += self.delta[key][1]
+                # 壁との衝突（初期位置の移動が壁を越えないように制限）
+                if self.x - BALL_RADIUS < WALL_MARGIN:
+                    self.x = WALL_MARGIN + BALL_RADIUS
+                if self.x + BALL_RADIUS > WIDTH - WALL_MARGIN:
+                    self.x = WIDTH - WALL_MARGIN - BALL_RADIUS
+        self.x += sum_mv[0]
+        self.y += sum_mv[1]
+        
         rect = self.image.get_rect(center=(int(self.x), int(self.y)))
         screen.blit(self.image, rect)
 
@@ -104,7 +135,9 @@ class Game:
     def _drop_ball(self):
         self.current_ball.falling = True
         self.balls.append(self.current_ball)
-        self.current_ball = Ball(WIDTH // 2, GAME_OVER_LINE_Y, self.ball_image)
+        # 次のボール生成場所を現在のボールのx座標に設定
+        next_x = self.current_ball.x
+        self.current_ball = Ball(next_x, GAME_OVER_LINE_Y, self.ball_image)
 
     def update(self):
         for ball in self.balls:
@@ -128,8 +161,8 @@ class Game:
         pg.draw.line(self.screen, (100, 60, 30), (WALL_MARGIN, FLOOR_Y), (WIDTH - WALL_MARGIN, FLOOR_Y), 4)
 
         for ball in self.balls:
-            ball.draw(self.screen)
-        self.current_ball.draw(self.screen)
+            ball.draw(pg.key.get_pressed(), self.screen)
+        self.current_ball.draw(pg.key.get_pressed(),self.screen)
 
         pg.display.flip()
 
