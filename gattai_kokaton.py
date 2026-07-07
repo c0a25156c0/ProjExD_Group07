@@ -7,7 +7,7 @@
 import os
 import sys
 import math
-
+import time
 import pygame as pg
 
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -22,8 +22,6 @@ FPS = 60
 
 BALL_RADIUS = 12
 BALL_IMAGE_PATH = "fig/0.png"
-
-
 class Ball:
     """落ちてくる小さい球（画像で表示）"""
 
@@ -83,10 +81,12 @@ class Game:
 
     def __init__(self):
         pg.init()
+        self.over_start = None #ゲームオーバー判定が始まった時刻を記録
+        self.start = True
+        self.game_over = False
         pg.display.set_caption("スイカゲーム（背景のみ）")
         self.screen = pg.display.set_mode((WIDTH, HEIGHT))
         self.clock = pg.time.Clock()
-
         self.ball_image = pg.image.load(BALL_IMAGE_PATH).convert_alpha()
 
         self.balls: list[Ball] = []
@@ -94,12 +94,12 @@ class Game:
 
     def handle_events(self):
         for event in pg.event.get():
-            if event.type == pg.QUIT:
-                pg.quit()
-                sys.exit()
-
-            if event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
-                self._drop_ball()
+            if self.start:
+                if event.type == pg.MOUSEBUTTONDOWN:
+                    self.start = False
+            if not self.game_over:
+                if event.type == pg.KEYDOWN and event.key == pg.K_RETURN:
+                    self._drop_ball()
 
     def _drop_ball(self):
         self.current_ball.falling = True
@@ -107,8 +107,28 @@ class Game:
         self.current_ball = Ball(WIDTH // 2, GAME_OVER_LINE_Y, self.ball_image)
 
     def update(self):
+        if self.start or self.game_over:
+            return
         for ball in self.balls:
             ball.update_physics()
+        if self.balls:
+            top = min(ball.y - BALL_RADIUS for ball in self.balls)
+            if top <= GAME_OVER_LINE_Y:
+                if self.over_start is None:
+                    self.over_start = time.time()
+                elif time.time() - self.over_start >= 1.5:
+                    self.game_over = True
+            else:
+                self.over_start = None
+            if self.game_over==True:
+                        self.screen.fill((0, 0, 0))
+                        fonto = pg.font.Font(None, 80)
+                        txt = fonto.render("Game Over", True, (255, 0, 0))
+                        self.screen.blit(txt, [WIDTH//2-150, HEIGHT//2])
+                        pg.display.flip() 
+                        time.sleep(2)
+                        pg.quit()
+                        sys.exit()
 
         # 全ペアの衝突判定
         for i in range(len(self.balls)):
@@ -117,7 +137,15 @@ class Game:
 
     def draw(self):
         self.screen.fill((250, 240, 210))
-
+        if self.start:
+            title = pg.font.Font(None, 80)
+            text = title.render("Gattai_kokaton", True, (255, 100, 0))
+            self.screen.blit(text, (110, 250))
+            font = pg.font.Font(None, 40)
+            text2 = font.render("Press click to Start", True, (0, 0, 0))
+            self.screen.blit(text2, (140, 400))
+            pg.display.flip()
+            return
         # ゲームオーバーライン
         pg.draw.line(self.screen, (255, 0, 0), (WALL_MARGIN, GAME_OVER_LINE_Y),
                      (WIDTH - WALL_MARGIN, GAME_OVER_LINE_Y), 2)
