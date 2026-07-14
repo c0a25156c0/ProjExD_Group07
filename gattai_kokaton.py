@@ -111,6 +111,9 @@ class Game:
     def __init__(self):
         pg.init()
         pg.mixer.init()  # 実装Sound
+        pg.mixer.music.load("ゆったりお散歩2.mp3")  
+        pg.mixer.music.set_volume(0.5)
+        pg.mixer.music.play(-1)
         self.hit_sound = pg.mixer.Sound("決定ボタンを押す52.wav")  # 実装Sound
         self.sound_type8 = pg.mixer.Sound("金額表示.wav")  # 実装Sound
         pg.display.set_caption("スイカゲーム（背景のみ）")
