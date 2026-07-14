@@ -7,6 +7,7 @@
 import os
 import sys
 import math
+import random  # ランダム選択のために追加
 
 import pygame as pg
 
@@ -17,28 +18,40 @@ FLOOR_Y = HEIGHT - 60
 WALL_MARGIN = 40
 GAME_OVER_LINE_Y = 120  # このラインを超えて積み上がったらゲームオーバー（予定）
 GRAVITY = 0.5
-RESTITUTION = 0.3  # 反発係数（0〜1）
+RESTITUTION = 0  # 反発係数（0〜1）
 FPS = 60
 
 BALL_RADIUS = 12
-BALL_IMAGE_PATH = "fig/0.png"
-
+# 複数のこうかとん画像に対応するためリストに格納
+BALL_IMAGE_PATHS = [
+    "fig/0.png", "fig/1.png", "fig/2.png", "fig/3.png", "fig/4.png",
+    "fig/5.png", "fig/6.png", "fig/7.png", "fig/8.png", "fig/9.png"
+]
 
 class Ball:
     """落ちてくる小さい球（画像で表示）"""
 
+<<<<<<< HEAD
     delta = {  # 押下キーと移動量の辞書
         pg.K_a: (-7, 0),
         pg.K_d: (+7, 0),
     }
 
     def __init__(self, x: float, y: float, image: pg.Surface):
+=======
+    def __init__(self, x: float, y: float, num: int, image: pg.Surface):
+>>>>>>> random
         self.x = x
         self.y = y
         self.vx = 0.0
         self.vy = 0.0
         self.falling = False  # Enterキーが押されるまでは静止
-        size = BALL_RADIUS * 2
+        self.num = num # 追加：番号を保存
+        
+        # 追加：番号(0~9)に応じて半径を大きくする（例として1段階ごとに+6ピクセル）
+        self.radius = 15 + (num * 6) 
+        
+        size = self.radius * 2 # 自分のradiusを基準にする
         self.image = pg.transform.smoothscale(image, (size, size))
 
     
@@ -50,6 +63,7 @@ class Ball:
         self.x += self.vx
         self.y += self.vy
 
+<<<<<<< HEAD
         # 壁との衝突
         if self.x - BALL_RADIUS < WALL_MARGIN:
             self.x = WALL_MARGIN + BALL_RADIUS
@@ -61,6 +75,11 @@ class Ball:
         # 床との衝突
         if self.y + BALL_RADIUS > FLOOR_Y:
             self.y = FLOOR_Y - BALL_RADIUS
+=======
+        # 床との衝突（BALL_RADIUS だった場所を self.radius に変更）
+        if self.y + self.radius > FLOOR_Y:
+            self.y = FLOOR_Y - self.radius
+>>>>>>> random
             self.vy *= -RESTITUTION
             if abs(self.vy) < 1.0:
                 self.vy = 0.0
@@ -90,7 +109,7 @@ def resolve_ball_collision(a: Ball, b: Ball):
     dx = b.x - a.x
     dy = b.y - a.y
     dist = math.hypot(dx, dy)
-    min_dist = BALL_RADIUS * 2
+    min_dist = a.radius + b.radius # 2つの球の半径の和
 
     if dist == 0 or dist >= min_dist:
         return
@@ -118,10 +137,13 @@ class Game:
         self.screen = pg.display.set_mode((WIDTH, HEIGHT))
         self.clock = pg.time.Clock()
 
-        self.ball_image = pg.image.load(BALL_IMAGE_PATH).convert_alpha()
-
+        # ボール画像をロードしてリストに格納(選択される画像の追加に伴い、繰り返しに変更)
+        self.ball_images = [
+            pg.image.load(path).convert_alpha() for path in BALL_IMAGE_PATHS
+        ]
         self.balls: list[Ball] = []
-        self.current_ball = Ball(WIDTH // 2, GAME_OVER_LINE_Y, self.ball_image)
+        rand_num = random.randint(0, 4) # 先に0~4の番号をランダム決定
+        self.current_ball = Ball(WIDTH // 2, GAME_OVER_LINE_Y, rand_num, self.ball_images[rand_num])
 
     def handle_events(self):
         for event in pg.event.get():
@@ -135,9 +157,15 @@ class Game:
     def _drop_ball(self):
         self.current_ball.falling = True
         self.balls.append(self.current_ball)
+<<<<<<< HEAD
         # 次のボール生成場所を現在のボールのx座標に設定
         next_x = self.current_ball.x
         self.current_ball = Ball(next_x, GAME_OVER_LINE_Y, self.ball_image)
+=======
+        
+        rand_num = random.randint(0, 4) # 次のボールも0~4からランダム決定
+        self.current_ball = Ball(WIDTH // 2, GAME_OVER_LINE_Y, rand_num, self.ball_images[rand_num])
+>>>>>>> random
 
     def update(self):
         for ball in self.balls:
