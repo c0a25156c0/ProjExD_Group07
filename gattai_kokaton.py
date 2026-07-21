@@ -228,7 +228,7 @@ class Game:
         self.next_ball_type = 0
         # 画像(第3引数)と種類ID(第4引数)を連動させる
         rand_num = random.randint(0, 4) # 先に0~4の番号をランダム決定
-        self.current_ball = Ball(WIDTH // 2, GAME_OVER_LINE_Y, rand_num, self.ball_images[self.next_ball_type], self.next_ball_type)
+        self.current_ball = Ball(WIDTH // 2, GAME_OVER_LINE_Y, rand_num, self.ball_images[rand_num], rand_num)
         self.score = Score()
 
     def handle_events(self):
