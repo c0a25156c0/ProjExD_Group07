@@ -256,7 +256,7 @@ class Game:
         for ball in self.balls:
             ball.update_physics()
         if self.balls:
-            top = min(ball.y - BALL_RADIUS for ball in self.balls)
+            top = min(ball.y - ball.radius for ball in self.balls)
             if top <= GAME_OVER_LINE_Y:
                 if self.over_start is None:
                     self.over_start = time.time()
